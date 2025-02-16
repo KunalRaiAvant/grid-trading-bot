@@ -1,4 +1,5 @@
 from flask import Flask, render_template, jsonify, request
+from flask_cors import CORS
 import requests
 import time
 from datetime import datetime
@@ -9,10 +10,12 @@ import os
 import logging
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+CORS(app) 
 
 class VirtualAccount:
     def __init__(self, initial_balance=20000):
@@ -586,4 +589,5 @@ def get_pnl():
     return jsonify({'error': 'Could not calculate PnL'})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
