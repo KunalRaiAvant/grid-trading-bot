@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid Trading Bot (Test Mode)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+</head>
+
+<body class="bg-gray-50">
+    <div class="min-h-screen p-8">
+        <div class="max-w-7xl mx-auto">
+            <!-- Virtual Balance Card -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Virtual Balance</h2>
+                    <button onclick="resetAccount()"
+                        class="px-4 py-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200">
+                        Reset Account
+                    </button>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="p-4 bg-indigo-50 rounded-lg">
+                        <div class="text-sm text-gray-600">USDT Balance</div>
+                        <div id="usdt-balance" class="text-xl font-bold">$20,000.00</div>
+                    </div>
+                    <div class="p-4 bg-blue-50 rounded-lg">
+                        <div class="text-sm text-gray-600">OM Balance</div>
+                        <div id="btc-balance" class="text-xl font-bold">0.00000000</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Trading Performance</h2>
+                    <div class="text-sm text-gray-500" id="pnl-update-time"></div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <div class="text-sm text-gray-600">Total PnL</div>
+                        <div id="total-pnl" class="text-xl font-bold"></div>
+                        <div id="total-pnl-percent" class="text-sm text-gray-600"></div>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <div class="text-sm text-gray-600">Unrealized PnL</div>
+                        <div id="unrealized-pnl" class="text-xl font-bold"></div>
+                        <div id="unrealized-pnl-percent" class="text-sm text-gray-600"></div>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <div class="text-sm text-gray-600">Realized PnL</div>
+                        <div id="realized-pnl" class="text-xl font-bold"></div>
+                        <div id="realized-pnl-percent" class="text-sm text-gray-600"></div>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <div class="text-sm text-gray-600">Total Trades</div>
+                        <div id="total-trades" class="text-xl font-bold">0</div>
+                        <div id="win-rate" class="text-sm text-gray-600"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market Price and Controls -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-2xl font-bold mb-6">Market Price</h2>
+                    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Current OM Price:</span>
+                            <span id="current-price" class="text-2xl font-bold text-indigo-600">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="mb-6 bg-gray-900 p-4 rounded-lg">
+                        <canvas id="priceChart" class="w-full h-64"></canvas>
+                    </div>
+
+                    <!-- Auto Calculate Button -->
+                    <button onclick="calculateOptimalGrid()"
+                        class="w-full mb-4 py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        Calculate Optimal Grid
+                    </button>
+
+                    <!-- Grid Configuration -->
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Upper Price</label>
+                                <input type="number" id="upper-price"
+                                    class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 p-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Lower Price</label>
+                                <input type="number" id="lower-price"
+                                    class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 p-2">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Grid Levels</label>
+                                <input type="number" id="grid-levels"
+                                    class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 p-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Quantity per Grid</label>
+                                <input type="number" id="quantity-per-grid"
+                                    class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 p-2">
+                            </div>
+                        </div>
+
+                        <!-- Grid Summary -->
+                        <div id="grid-summary" class="p-4 bg-gray-50 rounded-lg hidden">
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">Grid Summary</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Estimated Cost:</span>
+                                    <span id="estimated-cost" class="font-medium"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Grid Spacing:</span>
+                                    <span id="grid-spacing" class="font-medium"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Initial Market Order:</span>
+                                    <span id="market-order" class="font-medium"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="startGridTrading()" id="start-button"
+                            class="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                            Start Grid Trading
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grid Visualization -->
+                <!-- Grid and Debug Section -->
+                <div class="space-y-6">
+                    <!-- Grid Visualization -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-lg font-semibold mb-4">Grid Levels</h3>
+                        <div id="grid-visualization" class="space-y-2">
+                            <!-- Grid levels will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Debug Information -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-lg font-semibold mb-4">Debug Information</h3>
+                        <div id="debug-log" class="bg-gray-50 p-4 rounded-lg h-40 overflow-y-auto font-mono text-sm">
+                        </div>
+                    </div>
+
+                    <!-- Recent Trades Card -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">Recent Trades</h3>
+                            <span id="trade-update-time" class="text-sm text-gray-500"></span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Time</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Type</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Price</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Quantity</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trades-table" class="bg-white divide-y divide-gray-200">
+                                    <!-- Trades will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+
+                <script>
+                    function debugLog(message) {
+                        const debugDiv = document.getElementById('debug-log');
+                        const timestamp = new Date().toLocaleTimeString();
+                        debugDiv.innerHTML = `${timestamp}: ${message}<br>` + debugDiv.innerHTML;
+                    }
+
+                    let priceChart;
+                    let priceHistory = [];
+                    let gridPricesGlobal = []; // Store grid prices globally
+                    const MAX_PRICE_POINTS = 100;
+
+
+                    function initPriceChart() {
+                        const ctx = document.getElementById('priceChart').getContext('2d');
+
+                        priceChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: [],
+                                datasets: [
+                                    {
+                                        label: 'Price',
+                                        data: [],
+                                        borderColor: 'rgb(59, 130, 246)',
+                                        borderWidth: 2,
+                                        pointRadius: 0,
+                                        tension: 0.1
+                                    },
+                                    {
+                                        label: 'Buy Orders',
+                                        data: [],
+                                        pointBackgroundColor: 'rgb(34, 197, 94)',
+                                        pointRadius: 8,
+                                        pointStyle: 'circle',
+                                        showLine: false
+                                    },
+                                    {
+                                        label: 'Sell Orders',
+                                        data: [],
+                                        pointBackgroundColor: 'rgb(239, 68, 68)',
+                                        pointRadius: 8,
+                                        pointStyle: 'circle',
+                                        showLine: false
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                animation: false,
+                                plugins: {
+                                    annotation: {
+                                        annotations: {}
+                                    },
+                                    legend: {
+                                        display: true,
+                                        labels: {
+                                            color: 'rgba(255, 255, 255, 0.7)'
+                                        }
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function (context) {
+                                                if (context.dataset.label === 'Price') {
+                                                    return `Price: $${context.raw.toFixed(4)}`;
+                                                } else if (context.dataset.label === 'Buy Orders') {
+                                                    return `Buy @ $${context.raw.toFixed(4)}`;
+                                                } else if (context.dataset.label === 'Sell Orders') {
+                                                    return `Sell @ $${context.raw.toFixed(4)}`;
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        grid: {
+                                            display: false,
+                                            color: 'rgba(255, 255, 255, 0.1)'
+                                        },
+                                        ticks: {
+                                            color: 'rgba(255, 255, 255, 0.5)',
+                                            maxTicksLimit: 8
+                                        }
+                                    },
+                                    y: {
+                                        grid: {
+                                            color: 'rgba(255, 255, 255, 0.1)'
+                                        },
+                                        ticks: {
+                                            color: 'rgba(255, 255, 255, 0.5)'
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    function updatePriceChart(price) {
+                        if (!priceChart) {
+                            return;
+                        }
+
+                        const timestamp = new Date().toLocaleTimeString();
+
+                        // Add new price point
+                        priceHistory.push({
+                            time: timestamp,
+                            price: price
+                        });
+
+                        // Keep only last MAX_PRICE_POINTS points
+                        if (priceHistory.length > MAX_PRICE_POINTS) {
+                            priceHistory.shift();
+                        }
+
+                        // Update price line
+                        priceChart.data.labels = priceHistory.map(point => point.time);
+                        priceChart.data.datasets[0].data = priceHistory.map(point => point.price);
+
+                        // Check for grid level hits
+                        if (gridPricesGlobal.length > 0) {
+                            const buyPoints = [];
+                            const sellPoints = [];
+                            const lastTime = timestamp;
+                            const tolerance = 0.0001; // Tolerance for price matches
+
+                            gridPricesGlobal.forEach(gridPrice => {
+                                if (Math.abs(price - gridPrice) < tolerance) {
+                                    if (price > gridPrice) {
+                                        buyPoints.push({
+                                            x: lastTime,
+                                            y: gridPrice
+                                        });
+                                    } else {
+                                        sellPoints.push({
+                                            x: lastTime,
+                                            y: gridPrice
+                                        });
+                                    }
+                                    debugLog(`Grid level hit: ${price > gridPrice ? 'Buy' : 'Sell'} @ $${gridPrice}`);
+                                }
+                            });
+
+                            // Update buy/sell points
+                            priceChart.data.datasets[1].data = buyPoints;  // Buy points (green)
+                            priceChart.data.datasets[2].data = sellPoints; // Sell points (red)
+                        }
+
+                        priceChart.update();
+                    }
+                    async function updatePnL() {
+                        try {
+                            const response = await fetch('/api/virtual/pnl');
+                            const data = await response.json();
+
+                            // Update PnL values
+                            const totalPnL = document.getElementById('total-pnl');
+                            const totalPnLPercent = document.getElementById('total-pnl-percent');
+                            const unrealizedPnL = document.getElementById('unrealized-pnl');
+                            const unrealizedPnLPercent = document.getElementById('unrealized-pnl-percent');
+                            const realizedPnL = document.getElementById('realized-pnl');
+                            const realizedPnLPercent = document.getElementById('realized-pnl-percent');
+                            const totalTrades = document.getElementById('total-trades');
+                            const winRate = document.getElementById('win-rate');
+
+                            // Format PnL values with colors
+                            function formatPnL(value) {
+                                const formatted = value.toLocaleString('en-US', {
+                                    style: 'currency',
+                                    currency: 'USD'
+                                });
+                                const color = value >= 0 ? 'text-green-600' : 'text-red-600';
+                                return `<span class="${color}">${formatted}</span>`;
+                            }
+
+                            function formatPercent(value) {
+                                const formatted = `${value.toFixed(2)}%`;
+                                const color = value >= 0 ? 'text-green-600' : 'text-red-600';
+                                return `<span class="${color}">${formatted}</span>`;
+                            }
+
+                            // Update DOM elements
+                            totalPnL.innerHTML = formatPnL(data.total_pnl);
+                            totalPnLPercent.innerHTML = formatPercent(data.total_pnl_percent);
+                            unrealizedPnL.innerHTML = formatPnL(data.unrealized_pnl);
+                            unrealizedPnLPercent.innerHTML = formatPercent(data.unrealized_pnl_percent);
+                            realizedPnL.innerHTML = formatPnL(data.realized_pnl);
+                            realizedPnLPercent.innerHTML = formatPercent(data.realized_pnl_percent);
+                            totalTrades.textContent = data.total_trades;
+                            winRate.innerHTML = `Win Rate: ${data.win_rate.toFixed(2)}%`;
+
+                            // Update timestamp
+                            document.getElementById('pnl-update-time').textContent =
+                                `Last updated: ${new Date().toLocaleTimeString()}`;
+
+                        } catch (error) {
+                            debugLog(`Error updating PnL: ${error.message}`);
+                        }
+                    }
+
+                    async function updatePrice() {
+                        try {
+                            const response = await fetch('/api/market/price/OMUSDT');
+                            const data = await response.json();
+                            if (data.price) {
+                                const price = parseFloat(data.price);
+                                document.getElementById('current-price').textContent =
+                                    `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                                updatePriceChart(price);  // Add this line
+                                return price;
+                            }
+                        } catch (error) {
+                            debugLog(`Error fetching price: ${error.message}`);
+                        }
+                        return null;
+                    }
+
+                    async function calculateOptimalGrid() {
+                        try {
+                            debugLog('Calculating optimal grid parameters...');
+                            const response = await fetch('/api/grid/calculate');
+                            const data = await response.json();
+
+                            if (data.status === 'success') {
+                                const params = data.parameters;
+
+                                // Update input fields
+                                document.getElementById('upper-price').value = params.upper_price;
+                                document.getElementById('lower-price').value = params.lower_price;
+                                document.getElementById('grid-levels').value = params.grid_levels;
+                                document.getElementById('quantity-per-grid').value = params.quantity_per_grid;
+
+                                // Update summary
+                                document.getElementById('grid-summary').classList.remove('hidden');
+                                document.getElementById('estimated-cost').textContent =
+                                    `$${params.estimated_total_cost.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+                                document.getElementById('grid-spacing').textContent =
+                                    `$${params.grid_spacing.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+                                document.getElementById('market-order').textContent =
+                                    `$${(params.quantity_per_grid * data.current_price).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+
+                                // Update chart grid levels
+                                updateChartGridLevels(params.grid_prices);
+
+                                debugLog(`Grid parameters calculated successfully`);
+                                updateGridVisualization(data.current_price, params.grid_prices);
+                            } else {
+                                debugLog(`Error: ${data.message}`);
+                                alert('Error calculating grid parameters');
+                            }
+                        } catch (error) {
+                            debugLog(`Error: ${error.message}`);
+                            alert('Error calculating grid parameters');
+                        }
+                    }
+
+                    async function startGridTrading() {
+                        try {
+                            const upperPrice = parseFloat(document.getElementById('upper-price').value);
+                            const lowerPrice = parseFloat(document.getElementById('lower-price').value);
+                            const gridLevels = parseInt(document.getElementById('grid-levels').value);
+                            const quantityPerGrid = parseFloat(document.getElementById('quantity-per-grid').value);
+
+                            debugLog('Starting grid trading...');
+
+                            const startButton = document.getElementById('start-button');
+                            startButton.disabled = true;
+                            startButton.textContent = 'Starting...';
+
+                            const response = await fetch('/api/grid/start', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    market: 'OMUSDT',
+                                    upper_price: upperPrice,
+                                    lower_price: lowerPrice,
+                                    grid_levels: gridLevels,
+                                    quantity_per_grid: quantityPerGrid
+                                })
+                            });
+
+                            const data = await response.json();
+
+                            if (data.status === 'success') {
+                                debugLog('Grid trading started successfully');
+                                startButton.textContent = 'Grid Trading Active';
+                                startButton.classList.add('bg-gray-400');
+                                await updateBalance();
+                                await fetchTrades();  // Fetch trades immediately after orders are placed
+                            } else {
+                                debugLog(`Error: ${data.message}`);
+                                startButton.disabled = false;
+                                startButton.textContent = 'Start Grid Trading';
+                                alert(data.message || 'Error starting grid trading');
+                            }
+                        } catch (error) {
+                            debugLog(`Error: ${error.message}`);
+                            const startButton = document.getElementById('start-button');
+                            startButton.disabled = false;
+                            startButton.textContent = 'Start Grid Trading';
+                            alert('Error starting grid trading');
+                        }
+                    }
+
+                    async function updateBalance() {
+                        try {
+                            const response = await fetch('/api/virtual/balance');
+                            const data = await response.json();
+                            document.getElementById('usdt-balance').textContent =
+                                `$${data.USDT.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+                            document.getElementById('btc-balance').textContent =
+                                data.OM.toLocaleString('en-US', { minimumFractionDigits: 8 });
+                        } catch (error) {
+                            debugLog(`Error updating balance: ${error.message}`);
+                        }
+                    }
+
+                    async function resetAccount() {
+                        try {
+                            await fetch('/api/virtual/reset', { method: 'POST' });
+                            updateBalance();
+                            debugLog('Account reset successfully');
+                        } catch (error) {
+                            debugLog(`Error resetting account: ${error.message}`);
+                        }
+                    }
+                    function updatePriceChart(price) {
+                        if (!priceChart) {
+                            return;
+                        }
+
+                        const timestamp = new Date().toLocaleTimeString();
+
+                        priceHistory.push({
+                            time: timestamp,
+                            price: price
+                        });
+
+                        if (priceHistory.length > MAX_PRICE_POINTS) {
+                            priceHistory.shift();
+                        }
+
+                        priceChart.data.labels = priceHistory.map(point => point.time);
+                        priceChart.data.datasets[0].data = priceHistory.map(point => point.price);
+
+                        priceChart.update();
+                    }
+
+                    function updateGridVisualization(currentPrice, gridPrices) {
+                        const container = document.getElementById('grid-visualization');
+                        if (!container) return;
+
+                        // Clear existing grid visualization
+                        container.innerHTML = '';
+
+                        // Create grid levels (reverse array to show highest price first)
+                        [...gridPrices].reverse().forEach(price => {
+                            const gridItem = document.createElement('div');
+                            gridItem.className = `flex items-center justify-between p-2 ${Math.abs(price - currentPrice) < 0.01 ? 'bg-green-50' : 'bg-gray-50'
+                                } rounded-md`;
+
+                            const isPriceAboveCurrent = price > currentPrice;
+
+                            gridItem.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <span class="w-4 h-4 rounded-full ${isPriceAboveCurrent ? 'bg-red-400' : 'bg-green-400'
+                                }"></span>
+                <span class="text-sm">${isPriceAboveCurrent ? 'Sell' : 'Buy'}</span>
+            </div>
+            <span class="text-sm font-medium">$${price.toFixed(4)}</span>
+        `;
+
+                            container.appendChild(gridItem);
+                        });
+                    }
+
+                    async function fetchTrades() {
+                        try {
+                            const response = await fetch('/api/virtual/trades');
+                            const trades = await response.json();
+
+                            const tradesTable = document.getElementById('trades-table');
+                            const updateTime = document.getElementById('trade-update-time');
+
+                            // Update last update time
+                            updateTime.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+
+                            if (trades.length === 0) {
+                                tradesTable.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                                No trades yet
+                            </td>
+                        </tr>
+                    `;
+                                return;
+                            }
+
+                            // Show most recent trades first
+                            const recentTrades = trades.slice(-10).reverse();
+
+                            tradesTable.innerHTML = recentTrades.map(trade => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${new Date(trade.timestamp).toLocaleString()}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${trade.side === 'buy'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
+                                }">
+                                ${trade.side.toUpperCase()}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            $${parseFloat(trade.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${parseFloat(trade.quantity).toLocaleString('en-US', { minimumFractionDigits: 8 })}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            $${parseFloat(trade.value).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        </td>
+                    </tr>
+                `).join('');
+
+                            debugLog(`Updated trades table with ${recentTrades.length} recent trades`);
+                        } catch (error) {
+                            debugLog(`Error fetching trades: ${error.message}`);
+                        }
+                    }
+                    async function resetAccount() {
+                        try {
+                            debugLog('Resetting account...');
+                            const response = await fetch('/api/virtual/reset', {
+                                method: 'POST'
+                            });
+                            const data = await response.json();
+
+                            if (data.status === 'success') {
+                                // Update balance display
+                                document.getElementById('usdt-balance').textContent =
+                                    `$${parseFloat(data.data.balances.USDT).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+                                document.getElementById('btc-balance').textContent =
+                                    parseFloat(data.data.balances.BTC).toLocaleString('en-US', { minimumFractionDigits: 8 });
+
+                                // Clear trades table
+                                const tradesTable = document.getElementById('trades-table');
+                                tradesTable.innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                        No trades yet
+                    </td>
+                </tr>
+            `;
+
+                                // Reset grid trading button if active
+                                const startButton = document.getElementById('start-button');
+                                startButton.disabled = false;
+                                startButton.textContent = 'Start Grid Trading';
+                                startButton.classList.remove('bg-gray-400');
+
+                                debugLog('Account reset successful');
+
+                                // Recalculate optimal grid with fresh balance
+                                await calculateOptimalGrid();
+                            } else {
+                                debugLog(`Error resetting account: ${data.message}`);
+                                alert('Error resetting account');
+                            }
+                        } catch (error) {
+                            debugLog(`Error resetting account: ${error.message}`);
+                            alert('Error resetting account');
+                        }
+                    }
+                    async function getCurrentPrice() {
+                        try {
+                            const response = await fetch('/api/market/price/OMUSDT');
+                            const data = await response.json();
+                            return data.price;
+                        } catch (error) {
+                            debugLog(`Error fetching current price: ${error.message}`);
+                            return null;
+                        }
+                    }
+                    function validateGridInputs(upperPrice, lowerPrice, gridLevels, quantityPerGrid) {
+                        // Check if all values are present
+                        if (!upperPrice || !lowerPrice || !gridLevels || !quantityPerGrid) {
+                            alert('Please fill in all grid parameters');
+                            return false;
+                        }
+
+                        // Check if values are positive
+                        if (upperPrice <= 0 || lowerPrice <= 0 || gridLevels <= 0 || quantityPerGrid <= 0) {
+                            alert('All values must be positive');
+                            return false;
+                        }
+
+                        // Check price range
+                        if (upperPrice <= lowerPrice) {
+                            alert('Upper price must be greater than lower price');
+                            return false;
+                        }
+
+                        // Check grid levels
+                        if (gridLevels < 2 || gridLevels > 20) {
+                            alert('Grid levels must be between 2 and 20');
+                            return false;
+                        }
+
+                        return true;
+                    }
+                    async function updateManualGrid() {
+                        try {
+                            // Get values from inputs
+                            const upperPrice = parseFloat(document.getElementById('upper-price').value);
+                            const lowerPrice = parseFloat(document.getElementById('lower-price').value);
+                            const gridLevels = parseInt(document.getElementById('grid-levels').value);
+                            const quantityPerGrid = parseFloat(document.getElementById('quantity-per-grid').value);
+
+                            // Validate inputs
+                            if (!validateGridInputs(upperPrice, lowerPrice, gridLevels, quantityPerGrid)) {
+                                return;
+                            }
+
+                            // Get current price for reference
+                            const currentPrice = await getCurrentPrice();
+                            if (!currentPrice) {
+                                alert('Error: Could not fetch current price');
+                                return;
+                            }
+
+                            // Calculate grid parameters
+                            const gridSpacing = (upperPrice - lowerPrice) / (gridLevels - 1);
+                            const estimatedCost = quantityPerGrid * currentPrice * gridLevels;
+
+                            // Generate grid prices array (sorted from lowest to highest)
+                            const gridPrices = Array.from({ length: gridLevels }, (_, i) =>
+                                parseFloat((lowerPrice + (i * gridSpacing)).toFixed(4))
+                            );
+
+                            // Update UI elements
+                            document.getElementById('grid-summary').classList.remove('hidden');
+                            document.getElementById('estimated-cost').textContent =
+                                `$${estimatedCost.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+                            document.getElementById('grid-spacing').textContent =
+                                `$${gridSpacing.toLocaleString('en-US', { minimumFractionDigits: 4 })}`;
+                            document.getElementById('market-order').textContent =
+                                `$${(quantityPerGrid * currentPrice).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+
+                            // Update chart grid levels
+                            updateChartGridLevels(gridPrices);
+
+                            // Update grid visualization
+                            updateGridVisualization(currentPrice, gridPrices);
+
+                            debugLog(`Manual grid updated: ${gridLevels} levels from $${lowerPrice} to $${upperPrice}`);
+                        } catch (error) {
+                            debugLog(`Error updating manual grid: ${error.message}`);
+                            alert('Error updating grid parameters');
+                        }
+                    }
+                    // Initialize
+                    async function init() {
+                        initPriceChart();
+                        await updatePrice();
+                        await calculateOptimalGrid();
+                        await updateBalance();
+                        await fetchTrades();
+                        await updatePnL();  // Add this line
+
+                        // Set up periodic updates
+                        setInterval(updatePrice, 5000);
+                        setInterval(updateBalance, 10000);
+                        setInterval(fetchTrades, 5000);
+                        setInterval(updatePnL, 5000);  // Add this line
+                    }
+                    function updateChartGridLevels(gridPrices) {
+                        if (!priceChart) {
+                            return;
+                        }
+
+                        // Store grid prices globally
+                        gridPricesGlobal = gridPrices;
+
+                        // Remove existing grid level annotations
+                        priceChart.options.plugins.annotation.annotations = {};
+
+                        // Add new grid level annotations
+                        gridPrices.forEach((price, index) => {
+                            const isUpperHalf = price > gridPrices[Math.floor(gridPrices.length / 2) - 1];
+
+                            priceChart.options.plugins.annotation.annotations[`grid${index}`] = {
+                                type: 'line',
+                                yMin: price,
+                                yMax: price,
+                                borderColor: isUpperHalf ? 'rgba(239, 68, 68, 0.5)' : 'rgba(34, 197, 94, 0.5)',
+                                borderWidth: 1,
+                                borderDash: [5, 5],
+                                label: {
+                                    enabled: true,
+                                    content: `${isUpperHalf ? 'Sell' : 'Buy'} @ $${price.toFixed(4)}`,
+                                    position: 'right',
+                                    backgroundColor: isUpperHalf ? 'rgba(239, 68, 68, 0.8)' : 'rgba(34, 197, 94, 0.8)',
+                                    color: 'white',
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            };
+                        });
+
+                        priceChart.update();
+                    }
+
+
+                    // Start everything when the page loads
+                    document.addEventListener('DOMContentLoaded', init);
+                </script>
+</body>
+
+</html>
