@@ -1,42 +1,123 @@
-Based on the code provided, this appears to be a Grid Trading Bot simulation system. Let me break down the key components:
+# Grid Trading Bot Setup Guide
 
-1. Frontend (HTML/JavaScript):
-- A web interface that displays:
-  - Virtual account balance (USDT and OM tokens)
-  - Trading performance metrics (Total PnL, Realized/Unrealized PnL)
-  - Real-time price chart
-  - Grid visualization
-  - Recent trades table
-  - Grid configuration controls
+## Prerequisites
+- Python 3.7 or higher
+- pip (Python package installer)
+- Git (optional)
 
-2. Backend (Python/Flask):
-- Manages a virtual trading account with:
-  - Balance tracking
-  - Order placement
-  - Trade history
-  - PnL calculations
-- Implements grid trading strategy logic:
-  - Automatically calculates optimal grid parameters based on current price
-  - Places buy/sell orders at calculated price levels
-  - Monitors price movements for order execution
+## Installation Steps
 
-3. Key Features:
-- Test Mode: Uses virtual balance ($20,000 USDT initial balance)
-- Grid Trading Strategy:
-  - Creates multiple buy/sell orders at different price levels
-  - Automatically buys when price hits lower levels
-  - Automatically sells when price hits upper levels
-  - Aims to profit from price oscillations within a range
-- Real-time price monitoring
-- Performance tracking (win rate, PnL, etc.)
-- Account reset functionality
+1. Create a new directory for your project:
+```bash
+mkdir grid-trading-bot
+cd grid-trading-bot
+```
 
-4. Grid Trading Parameters:
-- Upper/Lower price bounds
-- Number of grid levels (default 6)
-- Quantity per grid
-- Automatic grid spacing calculation
+2. Create a Python virtual environment and activate it:
+```bash
+# On Windows
+python -m venv venv
+venv\Scripts\activate
 
-This system allows users to test grid trading strategies without risking real money, while providing real-time feedback on performance and trade execution.
+# On macOS/Linux
+python3 -m venv venv
+source venv/bin/activate
+```
 
-Would you like me to explain any specific component in more detail?
+3. Install required dependencies:
+```bash
+pip install flask requests
+```
+
+4. Create the following file structure:
+```
+grid-trading-bot/
+├── static/
+├── templates/
+│   └── index.html      # Copy the first HTML file here
+├── app.py              # Copy the second Python file here
+└── virtual_account.json # This will be created automatically
+```
+
+5. Copy the provided HTML code into `templates/index.html`
+   - Make sure to preserve all the JavaScript code within the script tags
+
+6. Copy the provided Python code into `app.py`
+
+## Running the Application
+
+1. Make sure your virtual environment is activated:
+```bash
+# On Windows
+venv\Scripts\activate
+
+# On macOS/Linux
+source venv/bin/activate
+```
+
+2. Start the Flask development server:
+```bash
+python app.py
+```
+
+3. Open your web browser and navigate to:
+```
+http://localhost:5000
+```
+
+## Using the Grid Trading Bot
+
+1. When you first load the application, you'll see:
+   - Virtual balance display ($20,000 USDT initial balance)
+   - Real-time price chart
+   - Grid configuration panel
+   - Trading performance metrics
+
+2. To start grid trading:
+   - Click "Calculate Optimal Grid" to get suggested parameters
+   - Or manually set your preferred:
+     - Upper price
+     - Lower price
+     - Grid levels
+     - Quantity per grid
+   - Click "Start Grid Trading"
+
+3. Monitor your trading:
+   - Watch the price chart with grid levels
+   - Monitor PnL in real-time
+   - View recent trades in the trades table
+   - Check debug information for detailed logs
+
+4. Reset your account:
+   - Click "Reset Account" to start over with initial balance
+
+## Troubleshooting
+
+1. If you see "Error fetching market price":
+   - Check your internet connection
+   - Verify the CoinDCX API is accessible
+   - Wait a few seconds and try again
+
+2. If grid trading doesn't start:
+   - Check your virtual balance
+   - Verify grid parameters are valid
+   - Look at the debug log for specific errors
+
+3. If the web interface doesn't load:
+   - Verify Flask server is running
+   - Check browser console for JavaScript errors
+   - Ensure all files are in correct locations
+
+## Development Notes
+
+- The application uses Flask's development server
+- Real-time price data comes from CoinDCX API
+- All trades are simulated (no real money involved)
+- Account state is persisted in `virtual_account.json`
+
+## Security Considerations
+
+- This is a test/simulation environment
+- Do not use real API keys or real trading credentials
+- Keep the development server behind a firewall
+- Don't expose to public internet without proper security measures
