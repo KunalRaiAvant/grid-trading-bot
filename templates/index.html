@@ -8,9 +8,97 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
 </head>
 
 <body class="bg-gray-50">
+
+    <div id="auth-container" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+            <div id="auth-tabs" class="flex mb-6">
+                <button onclick="showLogin()" class="flex-1 py-2 px-4 text-center border-b-2 border-indigo-500">
+                    Login
+                </button>
+                <button onclick="showSignup()" class="flex-1 py-2 px-4 text-center border-b-2 border-gray-200">
+                    Sign Up
+                </button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="login-email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="login-password"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <button type="submit" class="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                    Login
+                </button>
+                <!-- Add Forgot Password Link -->
+                <div class="text-center">
+                    <button type="button" onclick="showForgotPassword()"
+                        class="text-sm text-indigo-600 hover:text-indigo-800">
+                        Forgot Password?
+                    </button>
+                </div>
+            </form>
+
+            <!-- Sign Up Form -->
+            <form id="signup-form" class="hidden space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="signup-email"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="signup-password"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <button type="submit" class="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                    Sign Up
+                </button>
+            </form>
+
+            <!-- Forgot Password Form -->
+            <form id="forgot-password-form" class="hidden space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="forgot-password-email"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <button type="submit" class="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                    Send Reset Instructions
+                </button>
+                <button type="button" onclick="showLogin()"
+                    class="w-full py-2 px-4 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+                    Back to Login
+                </button>
+            </form>
+
+            <!-- Reset Password Form -->
+            <form id="reset-password-form" class="hidden space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">New Password</label>
+                    <input type="password" id="new-password"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Confirm New Password</label>
+                    <input type="password" id="confirm-new-password"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <button type="submit" class="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                    Reset Password
+                </button>
+            </form>
+        </div>
+    </div>
     <div class="min-h-screen p-8">
         <div class="max-w-7xl mx-auto">
             <!-- Virtual Balance Card -->
@@ -806,9 +894,201 @@
                         priceChart.update();
                     }
 
-
-                    // Start everything when the page loads
                     document.addEventListener('DOMContentLoaded', init);
+
+
+
+
+                    // Authentication state
+                    let authToken = null;
+
+                    // Show/hide forms
+                    function showLogin() {
+                        document.getElementById('login-form').classList.remove('hidden');
+                        document.getElementById('signup-form').classList.add('hidden');
+                        document.getElementById('forgot-password-form').classList.add('hidden');
+                        document.getElementById('reset-password-form').classList.add('hidden');
+
+                        // Update tab styling
+                        document.querySelector('button[onclick="showLogin()"]').classList.add('border-indigo-500');
+                        document.querySelector('button[onclick="showSignup()"]').classList.remove('border-indigo-500');
+                        document.querySelector('button[onclick="showSignup()"]').classList.add('border-gray-200');
+                    }
+
+                    function showSignup() {
+                        document.getElementById('login-form').classList.add('hidden');
+                        document.getElementById('signup-form').classList.remove('hidden');
+                        document.getElementById('forgot-password-form').classList.add('hidden');
+                        document.getElementById('reset-password-form').classList.add('hidden');
+
+                        // Update tab styling
+                        document.querySelector('button[onclick="showLogin()"]').classList.remove('border-indigo-500');
+                        document.querySelector('button[onclick="showLogin()"]').classList.add('border-gray-200');
+                        document.querySelector('button[onclick="showSignup()"]').classList.add('border-indigo-500');
+                    }
+
+                    function showForgotPassword() {
+                        document.getElementById('login-form').classList.add('hidden');
+                        document.getElementById('signup-form').classList.add('hidden');
+                        document.getElementById('forgot-password-form').classList.remove('hidden');
+                        document.getElementById('reset-password-form').classList.add('hidden');
+                    }
+
+                    // Handle successful authentication
+                    async function handleAuthSuccess(token) {
+                        try {
+                            authToken = token;
+                            localStorage.setItem('authToken', token);
+                            document.getElementById('auth-container').style.display = 'none';
+                            await init(); // Initialize trading interface
+                        } catch (error) {
+                            console.error('Error in handleAuthSuccess:', error);
+                            alert('Error initializing application. Please try again.');
+                        }
+                    }
+
+                    // Setup auth event listeners
+                    function setupAuthListeners() {
+                        // Login form handler
+                        document.getElementById('login-form').addEventListener('submit', async (e) => {
+                            e.preventDefault();
+                            try {
+                                const email = document.getElementById('login-email').value;
+                                const password = document.getElementById('login-password').value;
+
+                                const response = await fetch('/auth/login', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ email, password })
+                                });
+
+                                const data = await response.json();
+                                if (!response.ok) throw new Error(data.error || 'Login failed');
+
+                                await handleAuthSuccess(data.access_token);
+                            } catch (error) {
+                                console.error('Login error:', error);
+                                alert(error.message);
+                            }
+                        });
+
+                        // Signup form handler
+                        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+                            e.preventDefault();
+                            try {
+                                const email = document.getElementById('signup-email').value;
+                                const password = document.getElementById('signup-password').value;
+
+                                const response = await fetch('/auth/signup', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ email, password })
+                                });
+
+                                const data = await response.json();
+                                if (!response.ok) throw new Error(data.error || 'Signup failed');
+
+                                await handleAuthSuccess(data.access_token);
+                            } catch (error) {
+                                console.error('Signup error:', error);
+                                alert(error.message);
+                            }
+                        });
+
+                        // Forgot password form handler
+                        document.getElementById('forgot-password-form').addEventListener('submit', async (e) => {
+                            e.preventDefault();
+                            try {
+                                const email = document.getElementById('forgot-password-email').value;
+
+                                const response = await fetch('/auth/forgot-password', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ email })
+                                });
+
+                                const data = await response.json();
+                                if (!response.ok) throw new Error(data.error || 'Password reset request failed');
+
+                                alert('Password reset instructions have been sent to your email.');
+                                showLogin();
+                            } catch (error) {
+                                console.error('Forgot password error:', error);
+                                alert(error.message);
+                            }
+                        });
+                    }
+
+                    // Enhanced fetchWithAuth helper
+                    async function fetchWithAuth(url, options = {}) {
+                        if (!authToken) {
+                            throw new Error('Not authenticated');
+                        }
+
+                        try {
+                            const headers = {
+                                'Authorization': `Bearer ${authToken}`,
+                                'Content-Type': 'application/json',
+                                ...options.headers
+                            };
+
+                            const response = await fetch(url, { ...options, headers });
+
+                            if (response.status === 401) {
+                                localStorage.removeItem('authToken');
+                                authToken = null;
+                                document.getElementById('auth-container').style.display = 'flex';
+                                throw new Error('Authentication expired. Please login again.');
+                            }
+
+                            return response;
+                        } catch (error) {
+                            console.error('fetchWithAuth error:', error);
+                            throw error;
+                        }
+                    }
+
+                    // Check authentication and initialize app
+                    async function checkAuthAndInitialize() {
+                        const storedToken = localStorage.getItem('authToken');
+
+                        if (storedToken) {
+                            try {
+                                const response = await fetch('/api/virtual/balance', {
+                                    headers: {
+                                        'Authorization': `Bearer ${storedToken}`
+                                    }
+                                });
+
+                                if (response.ok) {
+                                    await handleAuthSuccess(storedToken);
+                                    return;
+                                }
+                            } catch (error) {
+                                console.error('Auth check failed:', error);
+                            }
+
+                            // Clear invalid token
+                            localStorage.removeItem('authToken');
+                            authToken = null;
+                        }
+
+                        // Show auth container if not authenticated
+                        document.getElementById('auth-container').style.display = 'flex';
+                    }
+
+                    // Initialize everything when the page loads
+                    document.addEventListener('DOMContentLoaded', () => {
+                        setupAuthListeners();  // Setup auth event listeners first
+                        checkAuthAndInitialize();  // Then check auth state and initialize if needed
+                    });
+
                 </script>
 </body>
 

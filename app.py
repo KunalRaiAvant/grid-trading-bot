@@ -9,6 +9,80 @@ from pathlib import Path
 import os
 import logging
 
+# auth_routes.py
+from flask import Blueprint, request, jsonify
+from supabase_client import supabase
+from functools import wraps
+
+
+auth_bp = Blueprint('auth', __name__)
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'No authorization token'}), 401
+        
+        token = auth_header.split(' ')[1]
+        try:
+            user = supabase.auth.get_user(token)
+            return f(user.user.id, *args, **kwargs)
+        except Exception as e:
+            return jsonify({'error': 'Invalid token'}), 401
+            
+    return decorated
+
+@auth_bp.route('/auth/login', methods=['POST'])
+def login():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not email or not password:
+            return jsonify({'error': 'Email and password required'}), 400
+            
+        response = supabase.auth.sign_in_with_password({
+            "email": email,
+            "password": password
+        })
+        
+        return jsonify({
+            'access_token': response.session.access_token,
+            'user': {
+                'id': response.user.id,
+                'email': response.user.email
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 401
+@auth_bp.route('/auth/signup', methods=['POST'])
+def signup():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not email or not password:
+            return jsonify({'error': 'Email and password required'}), 400
+            
+        response = supabase.auth.sign_up({
+            "email": email,
+            "password": password
+        })
+        
+        return jsonify({
+            'access_token': response.session.access_token,
+            'user': {
+                'id': response.user.id,
+                'email': response.user.email
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 401
+
 # Configure logging
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -555,6 +629,7 @@ def start_grid():
         return jsonify({'status': 'error', 'message': str(e)})
 
 @app.route('/api/virtual/balance')
+@require_auth
 def get_virtual_balance():
     return jsonify(virtual_account.balances)
 
@@ -588,6 +663,58 @@ def get_pnl():
         return jsonify(pnl_data)
     return jsonify({'error': 'Could not calculate PnL'})
 
+@auth_bp.route('/auth/forgot-password', methods=['POST'])
+def forgot_password():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({'error': 'Email required'}), 400
+            
+        # Send password reset email
+        response = supabase.auth.reset_password_email(email)
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Password reset instructions sent to your email'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 401
+
+@auth_bp.route('/auth/reset-password', methods=['POST'])
+def reset_password():
+    try:
+        data = request.get_json()
+        new_password = data.get('new_password')
+        
+        if not new_password:
+            return jsonify({'error': 'New password required'}), 400
+            
+        # Get access token from the request headers
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Reset token required'}), 401
+            
+        token = auth_header.split(' ')[1]
+        
+        # Update the user's password
+        response = supabase.auth.update_user(
+            token,
+            {"password": new_password}
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Password successfully updated'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 401
+
 if __name__ == '__main__':
+    # Register the auth blueprint
+    app.register_blueprint(auth_bp)
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
