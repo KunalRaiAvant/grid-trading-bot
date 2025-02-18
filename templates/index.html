@@ -13,92 +13,8 @@
 </head>
 
 <body class="bg-gray-50">
+    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
-    <div id="auth-container" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
-            <div id="auth-tabs" class="flex mb-6">
-                <button onclick="showLogin()" class="flex-1 py-2 px-4 text-center border-b-2 border-indigo-500">
-                    Login
-                </button>
-                <button onclick="showSignup()" class="flex-1 py-2 px-4 text-center border-b-2 border-gray-200">
-                    Sign Up
-                </button>
-            </div>
-
-            <!-- Login Form -->
-            <form id="login-form" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" id="login-email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" id="login-password"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                </div>
-                <button type="submit" class="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                    Login
-                </button>
-                <!-- Add Forgot Password Link -->
-                <div class="text-center">
-                    <button type="button" onclick="showForgotPassword()"
-                        class="text-sm text-indigo-600 hover:text-indigo-800">
-                        Forgot Password?
-                    </button>
-                </div>
-            </form>
-
-            <!-- Sign Up Form -->
-            <form id="signup-form" class="hidden space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" id="signup-email"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" id="signup-password"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                </div>
-                <button type="submit" class="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                    Sign Up
-                </button>
-            </form>
-
-            <!-- Forgot Password Form -->
-            <form id="forgot-password-form" class="hidden space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" id="forgot-password-email"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                </div>
-                <button type="submit" class="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                    Send Reset Instructions
-                </button>
-                <button type="button" onclick="showLogin()"
-                    class="w-full py-2 px-4 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
-                    Back to Login
-                </button>
-            </form>
-
-            <!-- Reset Password Form -->
-            <form id="reset-password-form" class="hidden space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">New Password</label>
-                    <input type="password" id="new-password"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Confirm New Password</label>
-                    <input type="password" id="confirm-new-password"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                </div>
-                <button type="submit" class="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                    Reset Password
-                </button>
-            </form>
-        </div>
-    </div>
     <div class="min-h-screen p-8">
         <div class="max-w-7xl mx-auto">
             <!-- Virtual Balance Card -->
@@ -234,14 +150,84 @@
                             <!-- Grid levels will be populated here -->
                         </div>
                     </div>
-
+                    <!-- Active Positions Card -->
+                    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold">Active Positions</h2>
+                            <div class="text-sm text-gray-500" id="position-update-time"></div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Symbol</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Amount</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Avg Entry</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Current Price</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Unrealized PnL</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            PnL %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="positions-table" class="bg-white divide-y divide-gray-200">
+                                    <!-- Positions will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                     <!-- Debug Information -->
                     <div class="bg-white rounded-lg shadow-lg p-6">
                         <h3 class="text-lg font-semibold mb-4">Debug Information</h3>
                         <div id="debug-log" class="bg-gray-50 p-4 rounded-lg h-40 overflow-y-auto font-mono text-sm">
                         </div>
                     </div>
-
+                    <!-- Order Queue Card -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">Active Orders</h3>
+                            <span id="order-update-time" class="text-sm text-gray-500"></span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            #</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Time</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Type</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Price</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Quantity</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orders-table" class="bg-white divide-y divide-gray-200">
+                                    <!-- Orders will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                     <!-- Recent Trades Card -->
                     <div class="bg-white rounded-lg shadow-lg p-6">
                         <div class="flex justify-between items-center mb-4">
@@ -303,9 +289,11 @@
                                         label: 'Price',
                                         data: [],
                                         borderColor: 'rgb(59, 130, 246)',
-                                        borderWidth: 2,
+                                        borderWidth: 2.5,  // Slightly thicker line
                                         pointRadius: 0,
-                                        tension: 0.1
+                                        tension: 0.2,  // Slightly smoother line
+                                        z: 10,  // Ensure price line stays on top
+                                        fill: false
                                     },
                                     {
                                         label: 'Buy Orders',
@@ -331,7 +319,27 @@
                                 animation: false,
                                 plugins: {
                                     annotation: {
-                                        annotations: {}
+                                        annotations: {
+                                            currentPrice: {
+                                                type: 'line',
+                                                yMin: 0,
+                                                yMax: 0,
+                                                borderColor: 'rgba(255, 255, 255, 0.8)',
+                                                borderWidth: 2,
+                                                borderDash: [5, 5],
+                                                label: {
+                                                    enabled: true,
+                                                    content: 'Current Price',
+                                                    position: 'right',
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                                    color: 'black',
+                                                    font: {
+                                                        size: 12,
+                                                        weight: 'bold'
+                                                    }
+                                                }
+                                            }
+                                        }
                                     },
                                     legend: {
                                         display: true,
@@ -397,6 +405,11 @@
                         // Update price line
                         priceChart.data.labels = priceHistory.map(point => point.time);
                         priceChart.data.datasets[0].data = priceHistory.map(point => point.price);
+
+                        // Update current price line
+                        priceChart.options.plugins.annotation.annotations.currentPrice.yMin = price;
+                        priceChart.options.plugins.annotation.annotations.currentPrice.yMax = price;
+                        priceChart.options.plugins.annotation.annotations.currentPrice.label.content = `Current: $${price.toFixed(4)}`;
 
                         // Check for grid level hits
                         if (gridPricesGlobal.length > 0) {
@@ -666,49 +679,93 @@
                             // Update last update time
                             updateTime.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
 
+                            // Check for new trades and show notification
+                            if (trades.length > 0) {
+                                const lastTrade = trades[trades.length - 1];
+
+                                // Store the last seen trade ID in localStorage
+                                const lastSeenTradeId = localStorage.getItem('lastSeenTradeId');
+                                const currentTradeId = lastTrade.order_id;
+
+                                if (lastSeenTradeId !== currentTradeId) {
+                                    showTradeNotification(lastTrade);
+                                    localStorage.setItem('lastSeenTradeId', currentTradeId);
+                                }
+                            }
+
+                            // Rest of your existing fetchTrades code...
                             if (trades.length === 0) {
                                 tradesTable.innerHTML = `
-                        <tr>
-                            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
-                                No trades yet
-                            </td>
-                        </tr>
-                    `;
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                        No trades yet
+                    </td>
+                </tr>
+            `;
                                 return;
                             }
 
-                            // Show most recent trades first
-                            const recentTrades = trades.slice(-10).reverse();
+                            // Your existing trade table update code...
 
-                            tradesTable.innerHTML = recentTrades.map(trade => `
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            ${new Date(trade.timestamp).toLocaleString()}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${trade.side === 'buy'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
-                                }">
-                                ${trade.side.toUpperCase()}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            $${parseFloat(trade.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            ${parseFloat(trade.quantity).toLocaleString('en-US', { minimumFractionDigits: 8 })}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            $${parseFloat(trade.value).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        </td>
-                    </tr>
-                `).join('');
-
-                            debugLog(`Updated trades table with ${recentTrades.length} recent trades`);
                         } catch (error) {
                             debugLog(`Error fetching trades: ${error.message}`);
                         }
+                    }
+                    function showTradeNotification(trade) {
+                        const container = document.getElementById('notification-container');
+
+                        // Create notification element
+                        const notification = document.createElement('div');
+                        const isBuy = trade.side.toLowerCase() === 'buy';
+
+                        notification.className = `flex items-center justify-between p-4 rounded-lg shadow-lg w-80 ${isBuy ? 'bg-green-100' : 'bg-red-100'
+                            }`;
+
+                        // Format the price and quantity
+                        const formattedPrice = parseFloat(trade.price).toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                        const formattedQuantity = parseFloat(trade.quantity).toLocaleString('en-US', {
+                            minimumFractionDigits: 8
+                        });
+
+                        notification.innerHTML = `
+        <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-full ${isBuy ? 'bg-green-200' : 'bg-red-200'} flex items-center justify-center">
+                <span class="text-sm font-bold ${isBuy ? 'text-green-700' : 'text-red-700'}">
+                    ${isBuy ? 'B' : 'S'}
+                </span>
+            </div>
+            <div>
+                <h4 class="font-semibold text-gray-800">${trade.side.toUpperCase()} Trade Executed</h4>
+                <p class="text-sm text-gray-600">${formattedQuantity} OM at $${formattedPrice}</p>
+            </div>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-gray-500 hover:text-gray-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+        </button>
+    `;
+
+                        // Add to container
+                        container.appendChild(notification);
+
+                        // Show browser notification if permitted
+                        if (Notification.permission === "granted") {
+                            new Notification(`${trade.side.toUpperCase()} Trade Executed`, {
+                                body: `${formattedQuantity} OM at $${formattedPrice}`,
+                                icon: '/api/placeholder/64/64'
+                            });
+                        }
+
+                        // Remove after 5 seconds
+                        setTimeout(() => {
+                            if (notification.parentElement) {
+                                notification.remove();
+                            }
+                        }, 5000);
                     }
                     async function resetAccount() {
                         try {
@@ -841,20 +898,174 @@
                             alert('Error updating grid parameters');
                         }
                     }
+
+                    async function cancelOrder(orderId) {
+                        try {
+                            const response = await fetch(`/api/virtual/cancel-order/${orderId}`, {
+                                method: 'POST'
+                            });
+                            const data = await response.json();
+
+                            if (data.status === 'success') {
+                                debugLog(`Order ${orderId} cancelled successfully`);
+                                await fetchActiveOrders(); // Refresh the orders list
+                                await updateBalance();     // Update balances
+                            } else {
+                                debugLog(`Error cancelling order: ${data.message}`);
+                                alert('Error cancelling order');
+                            }
+                        } catch (error) {
+                            debugLog(`Error cancelling order: ${error.message}`);
+                            alert('Error cancelling order');
+                        }
+                    }
+                    async function fetchActiveOrders() {
+                        try {
+                            const response = await fetch('/api/virtual/active-orders');
+                            const orders = await response.json();
+
+                            const ordersTable = document.getElementById('orders-table');
+                            const updateTime = document.getElementById('order-update-time');
+
+                            // Update last update time
+                            updateTime.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+
+                            if (orders.length === 0) {
+                                ordersTable.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                        No active orders
+                    </td>
+                </tr>
+            `;
+                                return;
+                            }
+
+                            // Sort orders by timestamp if needed
+                            orders.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+                            ordersTable.innerHTML = orders.map((order, index) => `
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                    ${index + 1}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${new Date(order.timestamp).toLocaleString()}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full ${order.side === 'buy'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
+                                }">
+                        ${order.side.toUpperCase()}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    $${parseFloat(order.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${parseFloat(order.quantity).toLocaleString('en-US', { minimumFractionDigits: 8 })}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <button 
+                        onclick="cancelOrder('${order.id}')"
+                        class="px-3 py-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200"
+                    >
+                        Cancel
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+                        } catch (error) {
+                            debugLog(`Error fetching active orders: ${error.message}`);
+                        }
+                    }
+
+                    async function updatePositions() {
+                        try {
+                            // Fetch current price
+                            const priceResponse = await fetch('/api/market/price/OMUSDT');
+                            const priceData = await priceResponse.json();
+                            const currentPrice = parseFloat(priceData.price);
+
+                            // Fetch balance
+                            const balanceResponse = await fetch('/api/virtual/balance');
+                            const balanceData = await balanceResponse.json();
+
+                            // Calculate average entry price
+                            const avgEntryResponse = await fetch('/api/virtual/average-entry');
+                            const avgEntryData = await avgEntryResponse.json();
+                            const avgEntryPrice = avgEntryData.average_entry_price;
+
+                            const positionsTable = document.getElementById('positions-table');
+                            const updateTime = document.getElementById('position-update-time');
+
+                            // Update timestamp
+                            updateTime.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+
+                            // Only show position if we have any OM balance
+                            if (balanceData.OM > 0) {
+                                const unrealizedPnL = (currentPrice - avgEntryPrice) * balanceData.OM;
+                                const pnlPercentage = ((currentPrice - avgEntryPrice) / avgEntryPrice) * 100;
+
+                                positionsTable.innerHTML = `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        OM/USDT
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${parseFloat(balanceData.OM).toFixed(8)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        $${avgEntryPrice.toFixed(4)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        $${currentPrice.toFixed(4)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${unrealizedPnL >= 0 ? 'text-green-600' : 'text-red-600'}">
+                        $${unrealizedPnL.toFixed(2)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${pnlPercentage >= 0 ? 'text-green-600' : 'text-red-600'}">
+                        ${pnlPercentage.toFixed(2)}%
+                    </td>
+                </tr>
+            `;
+                            } else {
+                                positionsTable.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                        No active positions
+                    </td>
+                </tr>
+            `;
+                            }
+                        } catch (error) {
+                            debugLog(`Error updating positions: ${error.message}`);
+                        }
+                    }
                     // Initialize
                     async function init() {
+                        if (Notification.permission === "default") {
+                            await Notification.requestPermission();
+                        }
                         initPriceChart();
+                        await updatePositions();
                         await updatePrice();
                         await calculateOptimalGrid();
                         await updateBalance();
                         await fetchTrades();
                         await updatePnL();  // Add this line
+                        await fetchActiveOrders();
+
 
                         // Set up periodic updates
-                        setInterval(updatePrice, 5000);
+                        setInterval(updatePrice, 1000);
                         setInterval(updateBalance, 10000);
                         setInterval(fetchTrades, 5000);
                         setInterval(updatePnL, 5000);  // Add this line
+                        setInterval(fetchActiveOrders, 5000);
+                        setInterval(updatePositions, 5000);
                     }
                     function updateChartGridLevels(gridPrices) {
                         if (!priceChart) {
@@ -867,7 +1078,7 @@
                         // Remove existing grid level annotations
                         priceChart.options.plugins.annotation.annotations = {};
 
-                        // Add new grid level annotations
+                        // Add new grid level annotations with improved visibility
                         gridPrices.forEach((price, index) => {
                             const isUpperHalf = price > gridPrices[Math.floor(gridPrices.length / 2) - 1];
 
@@ -875,21 +1086,43 @@
                                 type: 'line',
                                 yMin: price,
                                 yMax: price,
-                                borderColor: isUpperHalf ? 'rgba(239, 68, 68, 0.5)' : 'rgba(34, 197, 94, 0.5)',
+                                borderColor: isUpperHalf ? 'rgba(239, 68, 68, 0.4)' : 'rgba(34, 197, 94, 0.4)',
                                 borderWidth: 1,
-                                borderDash: [5, 5],
+                                borderDash: [3, 3],
                                 label: {
                                     enabled: true,
-                                    content: `${isUpperHalf ? 'Sell' : 'Buy'} @ $${price.toFixed(4)}`,
+                                    content: `${price.toFixed(4)}`,
                                     position: 'right',
-                                    backgroundColor: isUpperHalf ? 'rgba(239, 68, 68, 0.8)' : 'rgba(34, 197, 94, 0.8)',
+                                    backgroundColor: isUpperHalf ? 'rgba(239, 68, 68, 0.9)' : 'rgba(34, 197, 94, 0.9)',
                                     color: 'white',
                                     font: {
-                                        size: 11
+                                        size: 10,
+                                        weight: 'bold'
                                     }
                                 }
                             };
                         });
+
+                        // Add more prominent current price line
+                        priceChart.options.plugins.annotation.annotations.currentPrice = {
+                            type: 'line',
+                            yMin: parseFloat(document.getElementById('current-price').textContent.replace('$', '')),
+                            yMax: parseFloat(document.getElementById('current-price').textContent.replace('$', '')),
+                            borderColor: 'rgba(255, 255, 255, 0.9)',
+                            borderWidth: 2,
+                            borderDash: [2, 2],
+                            label: {
+                                enabled: true,
+                                content: 'Current',
+                                position: 'left',
+                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                color: 'black',
+                                font: {
+                                    size: 11,
+                                    weight: 'bold'
+                                }
+                            }
+                        };
 
                         priceChart.update();
                     }
@@ -1083,11 +1316,6 @@
                         document.getElementById('auth-container').style.display = 'flex';
                     }
 
-                    // Initialize everything when the page loads
-                    document.addEventListener('DOMContentLoaded', () => {
-                        setupAuthListeners();  // Setup auth event listeners first
-                        checkAuthAndInitialize();  // Then check auth state and initialize if needed
-                    });
 
                 </script>
 </body>

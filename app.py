@@ -92,7 +92,7 @@ app = Flask(__name__)
 CORS(app) 
 
 class VirtualAccount:
-    def __init__(self, initial_balance=20000):
+    def __init__(self, initial_balance=1000):
         self.initial_usdt = initial_balance
         self.reset_balance()
         self.orders = []
@@ -108,7 +108,15 @@ class VirtualAccount:
         
         # Calculate entry price for the trade
         entry_price = self._calculate_average_entry_price() if side == 'sell' else price
-        
+        order = {
+        'id': order_id,
+        'market': market,
+        'side': side,
+        'price': float(price),
+        'quantity': float(quantity),
+        'status': 'OPEN',  # Make sure this is set
+        'timestamp': datetime.now().isoformat()
+         }
         try:
             # Check if we have enough balance
             if side == 'buy':
@@ -525,7 +533,7 @@ class GridCalculator:
 
 virtual_account = VirtualAccount()
 market_data = MarketData()
-grid_calculator = GridCalculator()
+grid_calculator = GridCalculator(total_usdt=1000)
 
 @app.route('/')
 def index():
@@ -554,6 +562,17 @@ def calculate_grid():
     except Exception as e:
         logger.error(f"Error in calculate_grid: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/virtual/average-entry')
+def get_average_entry_price():
+    try:
+        avg_price = virtual_account._calculate_average_entry_price()
+        return jsonify({
+            'average_entry_price': avg_price
+        })
+    except Exception as e:
+        logger.error(f"Error calculating average entry price: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/grid/start', methods=['POST'])
 def start_grid():
@@ -629,7 +648,7 @@ def start_grid():
         return jsonify({'status': 'error', 'message': str(e)})
 
 @app.route('/api/virtual/balance')
-@require_auth
+
 def get_virtual_balance():
     return jsonify(virtual_account.balances)
 
@@ -712,7 +731,52 @@ def reset_password():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 401
+@app.route('/api/virtual/active-orders')
+def get_active_orders():
+    try:
+        # Filter for orders with status 'OPEN'
+        active_orders = [order for order in virtual_account.orders if order['status'] == 'OPEN']
+        return jsonify(active_orders)
+    except Exception as e:
+        logger.error(f"Error fetching active orders: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
+@app.route('/api/virtual/cancel-order/<order_id>', methods=['POST'])
+def cancel_order(order_id):
+    try:
+        # Find the order
+        order = next((order for order in virtual_account.orders if order['id'] == order_id), None)
+        
+        if not order:
+            return jsonify({'status': 'error', 'message': 'Order not found'}), 404
+            
+        if order['status'] != 'OPEN':
+            return jsonify({'status': 'error', 'message': 'Order cannot be cancelled'}), 400
+            
+        # Cancel the order
+        order['status'] = 'CANCELLED'
+        
+        # If it was a buy order, refund the USDT
+        if order['side'] == 'buy':
+            refund_amount = float(order['price']) * float(order['quantity'])
+            virtual_account.balances['USDT'] += refund_amount
+            
+        # If it was a sell order, refund the base asset
+        else:
+            base_asset = order['market'].replace('USDT', '')
+            virtual_account.balances[base_asset] += float(order['quantity'])
+            
+        virtual_account._save_state()
+        logger.info(f"Order {order_id} cancelled successfully")
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Order cancelled successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error cancelling order: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 if __name__ == '__main__':
     # Register the auth blueprint
     app.register_blueprint(auth_bp)
